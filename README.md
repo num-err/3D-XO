@@ -1,59 +1,58 @@
-# Remake Project
+# 3D Tic-Tac-Toe — Atari Remake in TIC-80
 
-**WIP September 24th by class; DUE October 2nd by 11:59PM**
+A remake of Atari's *3-D Tic-Tac-Toe* (1980) for the [TIC-80](https://tic80.com) fantasy console, written in Lua. Two players take turns placing X and O on a 4×4×4 cube; the first to get four in a row along any straight line through the cube wins.
 
-You and your partner will study a classic atari game by remaking it in
-TIC-80. You do not have to recreate every aspect of the original game,
-but your remake should capture the essence of the original game. Be
-mindful of taking advantage (or rebeling against) of TIC-80's
-affordances, in other words, what aspects of the original game does
-TIC-80 make it easy to recreate.
+Built with [Germain Hirwa](https://github.com/ghirwa1) for CS 86: Game Systems at Swarthmore College.
 
+---
 
-## Learning Objectives
+## How to play
 
-- understand what makes a classic game special by distilling it to its essence;
-- create a **working** reimaginiation of the game on TIC-80 in Lua;
-- think and write critically about your remake.
+| Key | Action |
+|---|---|
+| Arrow keys | Move the cursor within a layer |
+| `Z` / `X` | Move up / down a layer |
+| `A` | Place your mark |
+| Any key after a win or draw | Start a new game |
 
-## Deliverable
+The board is drawn as four stacked layers (L1–L4) in a slanted perspective, so you can see the whole cube at once. Wins can run along a row, across a layer, straight down through the layers, or diagonally through the entire cube — which is what makes the 3D version much harder to read than the 2D game.
 
-Submit your write-up on GitHub as a
-[`writeup/README.md`](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-Your writeup should be about 1024 words, it should read clearly and
-look nice. You will present your work during the lab period using a
-few slides, a play-test session, and a demonstration.  You should also
-include your TIC-80 game as a lua file and a collection of HTML files.
+## How it works
 
-```console
-unix:~$ cd game
-unix:~$ tic80 --fs .
-tic-80:~$ load game.lua
-tic-80:~$ export html remake.zip
-unix:~$ unzip remake.zip
-unix:~$ chmod a+r cart.tic
+**Board.** The cube is stored as a 3D array indexed by layer, row, and column, with `0` for empty, `1` for X, and `2` for O.
+
+**Win detection.** Instead of hard-coding all 76 possible winning lines, the game checks the 13 distinct directions a line can run in 3D:
+
+```lua
+{1,0,0}, {0,1,0}, {0,0,1},                    -- along one axis
+{1,1,0}, {1,-1,0},                            -- diagonal across a layer
+{1,0,1}, {1,0,-1}, {0,1,1}, {0,1,-1},         -- diagonal across a side wall
+{1,1,1}, {1,1,-1}, {1,-1,1}, {1,-1,-1},       -- diagonal through the whole cube
 ```
 
-If you use [`middleclass`](https://github.com/kikito/middleclass) or
-[`strict`](https://github.com/lua-stdlib/strict), exporting the game is a little more involved. First, just once, install the two packages.
+After each move, it walks forward and backward from the new mark in each direction and counts matching marks, staying inside the board. Four in a row is a win; a full board with no winner is a draw.
 
-```console
-$ luarocks install --local std.strict
-$ luarocks install --local amalg
-```
+**Rendering.** Each cell is drawn as a small parallelogram with TIC-80's line primitives, offset per row to give the layers depth, with the current player's cursor highlighted.
 
-Then anytime you change the game and want to export it:
-```console
-unix:~$ cd game
-unix:~$ ~/.luarocks/bin/amalg.lua -o exported_game.lua middleclass std.strict -s game.lua
-unix:~$ tic80 --fs .
-tic-80:~$ load exported_game.lua
-tic-80:~$ export html remake.zip
-unix:~$ unzip remake.zip
-unix:~$ chmod a+r cart.tic
+## Running it
+
+**In TIC-80:**
 
 ```
+cd game
+tic80 --fs .
+load game.lua
+run
+```
 
-**Sometimes the game data gets stale in the browser's cache. Try
-resetting your browser cache (or run in a private tab) if you make a
-change that isn't updated when you refresh the github pages.**
+**In a browser:** open `game/index.html` (the HTML export) from a local web server, e.g. `python3 -m http.server` inside `game/`.
+
+## Files
+
+```
+game/
+  game.lua            main game source
+  exported_game.lua   bundled build (with middleclass / std.strict)
+  index.html          HTML export, playable in the browser
+writeup/              design write-up
+```
